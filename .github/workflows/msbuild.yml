@@ -30,6 +30,25 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # === 新增：安装 vcpkg 并集成到 Visual Studio ===
+    - name: Install vcpkg
+      run: |
+        # 克隆 vcpkg 仓库（仅首次需要）
+        git clone https://github.com/microsoft/vcpkg.git
+        # 引导 vcpkg（生成 vcpkg.exe）
+        .\vcpkg\bootstrap-vcpkg.bat
+        # 集成到 Visual Studio（让 MSBuild 能自动找到库）
+        .\vcpkg\vcpkg integrate install
+      shell: cmd  # 明确使用 cmd，避免 PowerShell 路径问题
+
+    # === 新增：安装 OpenSSL (x64-windows) ===
+    - name: Install OpenSSL via vcpkg
+      run: |
+        .\vcpkg\vcpkg install openssl:x64-windows
+        # 再次确认集成（确保 MSBuild 能找到头文件和库）
+        .\vcpkg\vcpkg integrate install
+      shell: cmd
+
     - name: Add MSBuild to PATH
       uses: microsoft/setup-msbuild@v1.0.2
 
