@@ -164,8 +164,7 @@ public:
         FileManager::writeConfig("USER.cfg", { username }, true);
         FileManager::writeConfig("SALT.cfg", { salt }, true);
         FileManager::writeConfig("PASSWORD.cfg", { hashedPassword }, true);
-
-        cout << "User created successfully!\n";
+        if (isUserExists(username, true)) cout << "User created successfully!\n";
         Sleep(2000);
     }
 
@@ -179,22 +178,59 @@ public:
         return username.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_") == string::npos;
     }
 
+    
+
+    bool ManageUser(const string& username) {
+        system("cls");
+        if (!isUserExists(username)) {
+            cout << "User does not exist.\n";
+            return false;
+        }
+        // 管理用户逻辑（例如重置密码、删除用户等）
+        while (true) {
+            cout << "Managing user: " << username << "\n";
+            cout << "Services: 0 - Rest the password, 1 - Delete the account, 2 - Exit the service\n->";
+            string choice;
+            cin >> choice;
+
+            if (choice == "0") {
+				return RestPassword(username);
+            }
+            else if (choice == "1") {
+                return DeleteUser(username);
+            }
+            else if (choice == "2") {
+                return false;
+            }
+            else {
+                cout << "Invalid choice. Please try again.\n";
+                Sleep(1000);
+				system("cls");
+            }
+            
+        }
+	}
+
     // 用户存在检查（使用哈希表优化）
-    bool isUserExists(const string& username) {
+    bool isUserExists(const string& username,bool changed=false) {
         static unordered_map<string, bool> userCache;
         static bool cacheLoaded = false;
+        
 
-        if (!cacheLoaded) {
+        if (!cacheLoaded || changed) {
             auto users = FileManager::readConfig("USER.cfg");
             for (const auto& user : users) {
                 userCache[user] = true;
             }
-            cacheLoaded = true;
+            if(cacheLoaded) cacheLoaded = true;
+			if (changed) changed = false;
         }
 
         return userCache.find(username) != userCache.end();
     }
-
+    vector <string> getUsers() {
+        return getAllUsers();
+	}
     // 用户认证（增加尝试次数限制）
     bool authenticateUser(const string& username, const string& password, int maxAttempts = 3) {
         static unordered_map<string, int> attemptCount;
@@ -224,6 +260,70 @@ public:
 
 private:
     unique_ptr<FileManager> fileManager;
+    vector <string> getAllUsers() {
+        return FileManager::readConfig("USER.cfg");
+    }
+    bool DeleteUser(const string& username) {
+        if (!isUserExists(username)) {
+            cout << "User does not exist.\n";
+			Sleep(1000);
+            return false;
+        }
+        auto users = FileManager::readConfig("USER.cfg");
+        auto salts = FileManager::readConfig("SALT.cfg");
+        auto passwords = FileManager::readConfig("PASSWORD.cfg");
+        auto it = find(users.begin(), users.end(), username);
+        if (it != users.end()) {
+            size_t index = distance(users.begin(), it);
+            users.erase(it);
+            salts.erase(salts.begin() + index);
+            passwords.erase(passwords.begin() + index);
+            FileManager::writeConfig("USER.cfg", users);
+            FileManager::writeConfig("SALT.cfg", salts);
+            FileManager::writeConfig("PASSWORD.cfg", passwords);
+			if (!isUserExists(username, true)) cout << "User deleted successfully!\n";
+            Sleep(1000);
+            return true;
+        }
+        return false;
+    }
+	bool RestPassword(const string& username) {
+        if (!isUserExists(username)) {
+            cout << "User does not exist.\n";
+            return false;
+        }
+        cout << "Please enter old password->\n";
+        string psd;
+        cin >> psd;
+        if(authenticateUser(username, psd))
+        {
+            string newPassword;
+            cout << "Please enter new password (min 8 characters):\n->";
+            while (true) {
+                cin >> newPassword;
+                if (newPassword.length() >= 8) break;
+                cout << "Password too short. Minimum 8 characters:\n->";
+            }
+            auto users = FileManager::readConfig("USER.cfg");
+            auto salts = FileManager::readConfig("SALT.cfg");
+            auto passwords = FileManager::readConfig("PASSWORD.cfg");
+            auto it = find(users.begin(), users.end(), username);
+            if (it != users.end()) {
+                size_t index = distance(users.begin(), it);
+                string salt = FileManager::generateSalt();
+                string hashedPassword = FileManager::hashPassword(newPassword, salt);
+                salts[index] = salt;
+                passwords[index] = hashedPassword;
+                FileManager::writeConfig("SALT.cfg", salts);
+                FileManager::writeConfig("PASSWORD.cfg", passwords);
+                cout << "Password reset successfully!\n";
+                Sleep(1000);
+                return true;
+            }
+		}
+		else cout << "Wrong password!\n";
+        return false;
+    }
 };
 
 
@@ -243,8 +343,16 @@ void adminMenu(UserManager& userManager) {
 
         if (choice == "0") {
             userManager.createUser();
+            Sleep(1000);
         } else if (choice == "1") {
-            // Manage account logic
+			cout << "Please enter the username you want to manage:\n->";
+			for (auto i : userManager.getUsers()) {
+                cout << i << "\n";
+            }
+			string username;
+            cin >> username;
+            if(userManager.ManageUser(username)) cout<<"\aSuccess!";
+            Sleep(1000);
         } else if (choice == "2") {
             exitProgram();
         } else {
