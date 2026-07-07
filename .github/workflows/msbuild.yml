@@ -1,0 +1,63 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: MSBuild
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  # Path to the solution file relative to the root of the project.
+  SOLUTION_FILE_PATH: .
+
+  # Configuration type to build.
+  # You can convert this to a build matrix if you need coverage of multiple configuration types.
+  # https://docs.github.com/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+  BUILD_CONFIGURATION: Release
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # === 新增：安装 vcpkg 并集成到 Visual Studio ===
+    - name: Install vcpkg
+      run: |
+        # 克隆 vcpkg 仓库（仅首次需要）
+        git clone https://github.com/microsoft/vcpkg.git
+        # 引导 vcpkg（生成 vcpkg.exe）
+        .\vcpkg\bootstrap-vcpkg.bat
+        # 集成到 Visual Studio（让 MSBuild 能自动找到库）
+        .\vcpkg\vcpkg integrate install
+      shell: cmd  # 明确使用 cmd，避免 PowerShell 路径问题
+
+    # === 新增：安装 OpenSSL (x64-windows) ===
+    - name: Install OpenSSL via vcpkg
+      run: |
+        .\vcpkg\vcpkg install openssl:x64-windows
+        # 再次确认集成（确保 MSBuild 能找到头文件和库）
+        .\vcpkg\vcpkg integrate install
+      shell: cmd
+
+    - name: Add MSBuild to PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Restore NuGet packages
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      run: nuget restore ${{env.SOLUTION_FILE_PATH}}
+
+    - name: Build
+      working-directory: ${{env.GITHUB_WORKSPACE}}
+      # Add additional options to the MSBuild command line here (like platform or verbosity level).
+      # See https://docs.microsoft.com/visualstudio/msbuild/msbuild-command-line-reference
+      run: msbuild /m /p:Configuration=${{env.BUILD_CONFIGURATION}} ${{env.SOLUTION_FILE_PATH}}
