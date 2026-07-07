@@ -258,6 +258,7 @@ public:
         return false;
     }
 
+
 private:
     unique_ptr<FileManager> fileManager;
     vector <string> getAllUsers() {
@@ -333,60 +334,102 @@ void exitProgram() {
     Sleep(2000);
     exit(0);
 }
+class Menus {
+public:
+    void adminMenu(UserManager& userManager) {
+        while (true) {
+            system("cls");
+            cout << "Welcome Admin\nServices: 0 - Create an account, 1 - Manage an account, 2 - Login out\n->";
+            string choice;
+            cin >> choice;
 
-void adminMenu(UserManager& userManager) {
-    while (true) {
-        system("cls");
-        cout << "Welcome Admin\nServices: 0 - Create an account, 1 - Manage an account, 2 - Exit the service\n->";
-        string choice;
-        cin >> choice;
-
-        if (choice == "0") {
-            userManager.createUser();
-            Sleep(1000);
-        } else if (choice == "1") {
-			cout << "Please enter the username you want to manage:\n->";
-			for (auto i : userManager.getUsers()) {
-                cout << i << "\n";
+            if (choice == "0") {
+                userManager.createUser();
+                Sleep(1000);
             }
-			string username;
-            cin >> username;
-            if(userManager.ManageUser(username)) cout<<"\aSuccess!";
-            Sleep(1000);
-        } else if (choice == "2") {
-            exitProgram();
-        } else {
-            cout << "Invalid choice. Please try again.\n";
-            Sleep(1000);
+            else if (choice == "1") {
+                cout << "Please enter the username you want to manage:\n->";
+                for (auto i : userManager.getUsers()) {
+                    cout << i << "\n";
+                }
+                string username;
+                cin >> username;
+                if (userManager.ManageUser(username)) cout << "\aSuccess!";
+                Sleep(1000);
+            }
+            else if (choice == "2") {
+                break;
+            }
+            else {
+                cout << "Invalid choice. Please try again.\n";
+                Sleep(1000);
+            }
         }
     }
-}
+    void userMenu(UserManager& userManager,const string& username) {
+        string choice;
+        while (true) {
+            system("cls");
+            cout << "Welcome, " << username << "!\nServices: 0 - Manage user, 1 - Manage data , 2 - Login out\n->";
+            cin >> choice;
+            if (choice == "0") {
+                if (userManager.isUserExists(username)) { userManager.ManageUser(username); }
+                else { break; };
+                Sleep(1000);
+            }
+			else if (choice == "1")
+            {
+				system("cls");
+                cout << "WIP";
+				Sleep(1000);
+            }
+            else if (choice == "2") {
+                break;
+            }
+            else {
+                cout << "Invalid choice. Please try again.\n";
+                Sleep(1000);
+            }
+        }
+	}
 
-int main() {
+};
+int main()
+{
     try {
         UserManager userManager;
+        Menus m;
         string username, password;
         bool 超管;
         超管 = false;
-        cout << "Welcome!\nPlease enter your username. Enter /exit to exit\n->";
-        cin >> username;
+        while (true)
+        {
+            cout << "Welcome!\nPlease enter your username. Enter /exit to exit\n->";
+            cin >> username;
 
-        if (username == "/exit") {
-            exitProgram();
-        }
+            if (username == "/exit") {
+                exitProgram();
+            }
 
-        cout << "Please enter your password\n->";
-        cin >> password;
-        if (password == "/exit") {
-            exitProgram();
-        }
-        if (username == "Admin" && password=="Super_Admin1234" || 超管) {
-            adminMenu(userManager);
-        } else if (userManager.authenticateUser(username, password)) {
-            cout << "Welcome, " << username << "!\n";
-            // User menu logic
-        } else {
-            cout << "Invalid username or password.\n";
+            cout << "Please enter your password\n->";
+            cin >> password;
+            if (password == "/exit") {
+                exitProgram();
+            }
+            if (username == "Admin" && password == "Super_Admin1234" || 超管) {
+                m.adminMenu(userManager);
+
+            }
+            else if (userManager.authenticateUser(username, password)) {
+                cout << "Welcome, " << username << "!\n";
+                m.userMenu(userManager, username);
+				username.clear();
+				password.clear();
+            }
+            else {
+                cout << "Invalid username or password.\n";
+            }
+			system("cls");
         }
     } catch (const exception& e) {
         cerr << "Error: " << e.what() << endl;
