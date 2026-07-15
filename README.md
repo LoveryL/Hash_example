@@ -1,7 +1,3 @@
-It's a example for hash , filesteam and so on.  
-It's in building.  
-TMD英文太难写了，一下是中文.|The ****ing English is very hard to write for me.Following is Chinese.  If you don't know or speak Chinese you can use translation.  
----
 说明:
 以下是代码中各函数的详细解析及其输入值、作用说明：
 
@@ -147,13 +143,9 @@ TMD英文太难写了，一下是中文.|The ****ing English is very hard to wri
 ### **潜在改进点**
 1. **密码复杂度检查**：可添加对密码特殊字符的要求。
 2. **加密算法升级**：使用更安全的算法（如 Argon2）。
-3. **文件加密**：敏感文件（如 `PASSWORD.cfg`）可加密存储。
+3. **文件加密**：敏感文件加密存储。
 4. **日志记录**：记录用户操作和登录尝试。
-5. "超管"(True，现在是False)可以跳过登陆，转到Admin界面
-6. 默认密码Admin , Super_Admin1234
-待更新的点：
-7. Login out
-8. 用户界面(not adimn界面)
+5. 用户界面(not adimn界面)(WIP)
 ------------------------------------------------------------------------------------------------------
 期待你们的build和优化
 本代码无太多注释，请谅解，可以结合以上内容编写
@@ -164,3 +156,4 @@ Change log:
 1. pull code && Write README.md
 2. Del user file(USER.cfg PASSWORD.cfg and SALT.cfg)
 3. Change main file
+4.Add new functions.
